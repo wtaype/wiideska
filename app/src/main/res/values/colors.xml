@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_dark">#0A0E1A</color>
+    <color name="cyan_accent">#00F3FF</color>
+    <color name="surface">#151B2E</color>
+    <!-- Paz theme -->
+    <color name="paz_bg">#CCFFCE</color>
+    <color name="paz_wb">#EBFFEB</color>
+    <color name="paz_green">#25B62A</color>
+</resources>
