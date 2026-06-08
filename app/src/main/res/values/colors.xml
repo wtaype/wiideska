@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="Wiidesk_gold">#FF1978D7</color>
+    <color name="Wiidesk_white">#FFFFFFFF</color>
+    <color name="Wiidesk_icon_paz">#CCEFFF</color>
+    <color name="splash_bg">#FFF8D1</color>
+</resources>
