@@ -11,7 +11,7 @@ object Wii {
     const val launch = 2026
     const val by = "@wilder.taype"
     const val versionName = "1.0.0"
-    const val version = "v10"
+    const val version = "v11"
 }
 
 /** ACTUALIZAR AL TAG POR SEGURIDAD [TAG NUEVO] (1)

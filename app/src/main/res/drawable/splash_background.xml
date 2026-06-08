@@ -5,5 +5,5 @@
         android:gravity="center"
         android:width="220dp"
         android:height="220dp"
-        android:drawable="@drawable/wiihope_splash_logo" />
+        android:drawable="@drawable/splash_logo" />
 </layer-list>
