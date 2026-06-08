@@ -73,7 +73,9 @@ import com.wiidesk.app.Wii
 import com.wiidesk.app.backend.login.AuthRepo
 import com.wiidesk.app.backend.perfil.Smile
 import com.wiidesk.app.premiumBackground
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private enum class AuthMode { Login, Register, Recover, GoogleProfile }
 
@@ -98,6 +100,9 @@ fun Login(
     var confirmPassword by remember { mutableStateOf("") }
     var acceptedTerms by remember { mutableStateOf(false) }
     var googleEmail by remember { mutableStateOf("") }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) { auth.ensureReady(context) }
+    }
 
     fun show(message: String, type: WiMsgType = WiMsgType.Info) {
         messenger.Mensaje(message, type)
@@ -110,7 +115,10 @@ fun Login(
     fun runAuth(block: suspend () -> Smile) {
         scope.launch {
             loading = true
-            runCatching { block() }
+            runCatching {
+                withContext(Dispatchers.IO) { auth.ensureReady(context) }
+                block()
+            }
                 .onSuccess {
                     show("Bienvenido, ${it.nombre.ifBlank { it.usuario }}", WiMsgType.Success)
                     onAuthenticated(it)
@@ -127,7 +135,10 @@ fun Login(
         }
         scope.launch {
             loading = true
-            runCatching { auth.loginWithGoogle(result.data) }
+            runCatching {
+                withContext(Dispatchers.IO) { auth.ensureReady(context) }
+                auth.loginWithGoogle(result.data)
+            }
                 .onSuccess { profile ->
                     if (profile == null) {
                         googleEmail = auth.currentEmail.orEmpty()
@@ -140,6 +151,7 @@ fun Login(
                     }
                 }
                 .onFailure { e ->
+                    runCatching { auth.discardPendingGoogleRegistration() }
                     val msg = when {
                         e.message?.contains("DEVELOPER_ERROR", ignoreCase = true) == true ->
                             "Error Google: revisa SHA-1 en Firebase Console"
@@ -324,7 +336,7 @@ private fun GoogleAccessButton(loading: Boolean, onClick: () -> Unit) {
         Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(R.drawable.ic_google_logo), contentDescription = "Google", modifier = Modifier.size(25.dp))
             Spacer(Modifier.width(12.dp))
-            Text("Continua con Google", style = WiText.body.copy(color = WiCss.tx1, fontWeight = FontWeight.SemiBold))
+            Text("Continua con Google", style = WiText.body.copy(color = Color(0xFF1F2937), fontWeight = FontWeight.SemiBold))
         }
     }
 }

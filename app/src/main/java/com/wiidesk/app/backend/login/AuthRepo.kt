@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -25,6 +26,10 @@ class AuthRepo {
     val currentUser get() = auth.currentUser
     val currentEmail: String? get() = auth.currentUser?.email
     val isLoggedIn: Boolean get() = auth.currentUser != null
+
+    fun ensureReady(context: Context) {
+        FirebaseApp.initializeApp(context.applicationContext)
+    }
 
     suspend fun getSessionProfile(): Smile? {
         val user = auth.currentUser ?: return null

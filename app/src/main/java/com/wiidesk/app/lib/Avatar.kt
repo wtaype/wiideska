@@ -1,7 +1,6 @@
 package com.wiidesk.app
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -14,7 +13,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.wiidesk.app.backend.perfil.Smile
 
@@ -29,8 +27,7 @@ fun AvatarImage(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(WiCss.mco.copy(alpha = 0.18f))
-            .border(1.5.dp, WiCss.brd.copy(alpha = 0.62f), CircleShape),
+            .background(WiCss.mco.copy(alpha = 0.18f)),
         contentAlignment = Alignment.Center,
     ) {
         val avatarUrl = profile?.avatar?.trim().orEmpty()
