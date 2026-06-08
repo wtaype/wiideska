@@ -71,6 +71,7 @@ import com.wiidesk.app.WiMsgType
 import com.wiidesk.app.WiText
 import com.wiidesk.app.Wii
 import com.wiidesk.app.backend.login.AuthRepo
+import com.wiidesk.app.lib.GoldPill
 import com.wiidesk.app.backend.perfil.Smile
 import com.wiidesk.app.premiumBackground
 import kotlinx.coroutines.Dispatchers
@@ -90,7 +91,8 @@ fun Login(
     val messenger = LocalWiMessenger.current
     val scope = rememberCoroutineScope()
     var mode by remember { mutableStateOf(AuthMode.Login) }
-    var loading by remember { mutableStateOf(false) }
+    var emailLoading by remember { mutableStateOf(false) }
+    var googleLoading by remember { mutableStateOf(false) }
     var emailOrUser by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var usuario by remember { mutableStateOf("") }
@@ -114,7 +116,7 @@ fun Login(
 
     fun runAuth(block: suspend () -> Smile) {
         scope.launch {
-            loading = true
+            emailLoading = true
             runCatching {
                 withContext(Dispatchers.IO) { auth.ensureReady(context) }
                 block()
@@ -124,7 +126,7 @@ fun Login(
                     onAuthenticated(it)
                 }
                 .onFailure { show(it.message ?: "No se pudo completar la accion", WiMsgType.Error) }
-            loading = false
+            emailLoading = false
         }
     }
 
@@ -134,7 +136,7 @@ fun Login(
             return@rememberLauncherForActivityResult
         }
         scope.launch {
-            loading = true
+            googleLoading = true
             runCatching {
                 withContext(Dispatchers.IO) { auth.ensureReady(context) }
                 auth.loginWithGoogle(result.data)
@@ -161,7 +163,7 @@ fun Login(
                     }
                     show(msg, WiMsgType.Error)
                 }
-            loading = false
+            googleLoading = false
         }
     }
 
@@ -199,7 +201,7 @@ fun Login(
                         when (currentMode) {
                             AuthMode.Login -> {
                                 AuthTitle("Bienvenido", "Entra para sincronizar tus dispositivos.")
-                                GoogleAccessButton(loading) {
+                                GoogleAccessButton(googleLoading) {
                                     runCatching { googleLauncher.launch(auth.googleIntent(context)) }
                                         .onFailure { show(it.message ?: "Google no esta disponible", WiMsgType.Error) }
                                 }
@@ -208,7 +210,7 @@ fun Login(
                                 WiButton(
                                     text = "Entrar",
                                     onClick = { runAuth { auth.login(emailOrUser, password) } },
-                                    loading = loading,
+                                    loading = emailLoading,
                                     icon = Icons.Rounded.Login,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
@@ -218,7 +220,7 @@ fun Login(
 
                             AuthMode.Register -> {
                                 AuthTitle("Crear cuenta", "Tu perfil guardara la sesion y preferencias.")
-                                GoogleAccessButton(loading) {
+                                GoogleAccessButton(googleLoading) {
                                     runCatching { googleLauncher.launch(auth.googleIntent(context)) }
                                         .onFailure { show(it.message ?: "Google no esta disponible", WiMsgType.Error) }
                                 }
@@ -243,7 +245,7 @@ fun Login(
                                             else -> runAuth { auth.register(usuario, nombre, apellidos, email, password) }
                                         }
                                     },
-                                    loading = loading,
+                                    loading = emailLoading,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
                                 AuthTextAction("Ya tengo cuenta", Icons.Rounded.Person) { mode = AuthMode.Login }
@@ -256,17 +258,17 @@ fun Login(
                                     text = "Enviar enlace",
                                     onClick = {
                                         scope.launch {
-                                            loading = true
+                                            emailLoading = true
                                             runCatching { auth.recover(email) }
                                                 .onSuccess {
                                                     show("Listo, revisa tu correo", WiMsgType.Success)
                                                     mode = AuthMode.Login
                                                 }
                                                 .onFailure { show(it.message ?: "No se pudo enviar el correo", WiMsgType.Error) }
-                                            loading = false
+                                            emailLoading = false
                                         }
                                     },
-                                    loading = loading,
+                                    loading = emailLoading,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
                                 AuthTextAction("Volver a ingresar", Icons.Rounded.Person) { mode = AuthMode.Login }
@@ -275,9 +277,17 @@ fun Login(
                             AuthMode.GoogleProfile -> {
                                 AuthTitle("Casi listo", "Elige tu usuario para completar Google.")
                                 if (googleEmail.isNotBlank()) {
-                                    Text(googleEmail, style = WiText.small.copy(color = WiCss.mco, fontWeight = FontWeight.Bold))
+                                    GoldPill(text = googleEmail, modifier = Modifier.align(Alignment.CenterHorizontally))
                                 }
                                 AuthField(usuario, { usuario = cleanUserInput(it) }, "Usuario", Icons.Rounded.Badge)
+                                if (usuario.isNotBlank() && usuario.length < 4) {
+                                    Text(
+                                        text = "Mínimo 4 caracteres (letras, números, _ o -)",
+                                        style = WiText.small,
+                                        color = WiCss.error,
+                                        modifier = Modifier.fillMaxWidth().padding(start = 4.dp),
+                                    )
+                                }
                                 TermsRow(
                                     checked = acceptedTerms,
                                     onCheckedChange = { acceptedTerms = it },
@@ -293,7 +303,7 @@ fun Login(
                                             else -> runAuth { auth.completeGoogleRegistration(usuario) }
                                         }
                                     },
-                                    loading = loading,
+                                    loading = emailLoading,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
                                 AuthTextAction("Cancelar y volver", Icons.Rounded.Person) {
@@ -333,10 +343,23 @@ private fun GoogleAccessButton(loading: Boolean, onClick: () -> Unit) {
         shape = CircleShape,
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.92f)),
     ) {
-        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            Image(painterResource(R.drawable.ic_google_logo), contentDescription = "Google", modifier = Modifier.size(25.dp))
-            Spacer(Modifier.width(12.dp))
-            Text("Continua con Google", style = WiText.body.copy(color = Color(0xFF1F2937), fontWeight = FontWeight.SemiBold))
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (loading) {
+                androidx.compose.material3.CircularProgressIndicator(
+                    color = Color(0xFF1F2937),
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(22.dp)
+                )
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(painterResource(R.drawable.ic_google_logo), contentDescription = "Google", modifier = Modifier.size(25.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Text("Continua con Google", style = WiText.body.copy(color = Color(0xFF1F2937), fontWeight = FontWeight.SemiBold))
+                }
+            }
         }
     }
 }

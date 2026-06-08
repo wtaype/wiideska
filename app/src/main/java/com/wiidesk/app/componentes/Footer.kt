@@ -25,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,13 +47,23 @@ fun WiFooter(
         Triple("ajustes", "Ajustes", Icons.Rounded.Settings),
     )
 
+    val borderColor = WiCss.brd.copy(alpha = 0.5f)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(WiCss.chromeSurface())
             .windowInsetsPadding(WindowInsets.navigationBars)
             .height(FzSmart.footerHeight)
-            .padding(horizontal = dpSmart(8f, 1.0f, 14f), vertical = FzSmart.footerPadV),
+            .drawBehind {
+                drawLine(
+                    color = borderColor,
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = 1.dp.toPx()
+                )
+            }
+            .padding(bottom = FzSmart.footerPadV),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -61,15 +73,23 @@ fun WiFooter(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(14.dp))
                     .clickable { onNavigate(route) }
-                    .padding(vertical = dpSmart(3f, 0.45f, 6f)),
+                    .drawBehind {
+                        if (selected) {
+                            drawLine(
+                                color = tint,
+                                start = Offset(0f, 0f),
+                                end = Offset(size.width, 0f),
+                                strokeWidth = 3.dp.toPx()
+                            )
+                        }
+                    }
+                    .padding(top = FzSmart.footerPadV, bottom = dpSmart(3f, 0.45f, 6f)),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
                         .background(if (selected) WiCss.bg1 else androidx.compose.ui.graphics.Color.Transparent)
                         .padding(horizontal = dpSmart(9f, 0.95f, 13f), vertical = dpSmart(3f, 0.35f, 5f)),
                     contentAlignment = Alignment.Center,

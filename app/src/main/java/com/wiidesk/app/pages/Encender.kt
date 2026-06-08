@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.wiidesk.app.*
+import com.wiidesk.app.backend.core.wol.TransmisorMagico
+import kotlinx.coroutines.launch
 
 data class HostMock(
     val id: String,
@@ -32,6 +34,7 @@ data class HostMock(
 fun Encender(navController: NavController) {
     val context = LocalContext.current
     val messenger = LocalWiMessenger.current
+    val scope = rememberCoroutineScope()
     
     // Lista de equipos de prueba
     val hosts = remember {
@@ -172,15 +175,17 @@ fun Encender(navController: NavController) {
                             text = if (host.isOnline) "En línea" else "Encender (WoL)",
                             onClick = {
                                 messenger.Mensaje("Enviando Magic Packet a ${host.alias}...", WiMsgType.Info)
-                                // Simular cambio de estado después de WoL
-                                if (!host.isOnline) {
-                                    hosts[index] = host.copy(isOnline = true)
+                                scope.launch {
+                                    TransmisorMagico.despertarDispositivo(host.mac)
+                                    if (!host.isOnline) {
+                                        hosts[index] = host.copy(isOnline = true)
+                                    }
+                                    messenger.Mensaje("¡Magic Packet WoL enviado a ${host.alias}!", WiMsgType.Success)
                                 }
                             },
                             loading = false,
                             icon = Icons.Rounded.PowerSettingsNew,
                             modifier = Modifier.weight(1.3f),
-                            // Si está online, deshabilitar o cambiar color
                         )
 
                         // Botón secundario para suspender

@@ -5,5 +5,5 @@
     <color name="Wiidesk_gold">#FF1978D7</color>
     <color name="Wiidesk_white">#FFFFFFFF</color>
     <color name="Wiidesk_icon_paz">#CCEFFF</color>
-    <color name="splash_bg">#FFF8D1</color>
+    <color name="splash_bg">#ccefff</color>
 </resources>
