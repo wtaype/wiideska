@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import com.wiidesk.app.R
@@ -39,24 +38,6 @@ val fPoppins = FontFamily(
 val dPoppins = fPoppins
 
 val LocalWiTemaColors = staticCompositionLocalOf { OroTemaColors }
-
-@Composable
-fun clampSp(min: Float, preferredVh: Float, max: Float): TextUnit {
-    val heightDp = LocalConfiguration.current.screenHeightDp.toFloat()
-    val widthDp = LocalConfiguration.current.screenWidthDp
-    val isExtraLargePhone = widthDp >= 520 && heightDp >= 1100f
-    val scale = if (isExtraLargePhone) 0.90f else 1f
-    return ((heightDp * preferredVh / 100f).coerceIn(min, max) * scale).sp
-}
-
-@Composable
-fun clampDp(min: Float, preferredVh: Float, max: Float): Dp {
-    val heightDp = LocalConfiguration.current.screenHeightDp.toFloat()
-    val widthDp = LocalConfiguration.current.screenWidthDp
-    val isExtraLargePhone = widthDp >= 520 && heightDp >= 1100f
-    val scale = if (isExtraLargePhone) 0.92f else 1f
-    return ((heightDp * preferredVh / 100f).coerceIn(min, max) * scale).dp
-}
 
 object WiDevice {
     val heightDp: Int @Composable get() = LocalConfiguration.current.screenHeightDp
@@ -127,7 +108,7 @@ object WiCss {
         if (isDark) listOf(bg, wb, bg) else listOf(wb, bg, wb)
     )
     val gradGoldSoft: Brush @Composable get() = Brush.linearGradient(listOf(brd.copy(alpha = 0.8f), mco))
-    val padL = PaddingValues(horizontal = 20.dp, vertical = 16.dp)
+    val padL: PaddingValues @Composable get() = PaddingValues(horizontal = dpSmart(16f, 2.0f, 22f), vertical = dpSmart(12f, 1.6f, 18f))
 
     fun glassShape(intensity: Float = 0.55f) = RoundedCornerShape(if (intensity > 0.75f) 24.dp else 20.dp)
     @Composable fun glassBorder(intensity: Float = 0.55f) = BorderStroke(1.dp, brd.copy(alpha = 0.40f + intensity * 0.25f))
@@ -136,12 +117,13 @@ object WiCss {
     @Composable fun chromeSurface(alpha: Float = 0.98f): Color = wb.copy(alpha = alpha)
 }
 
-private val WiiTypography = Typography(
-    headlineLarge = TextStyle(fontFamily = dPoppins, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 36.sp),
-    titleLarge = TextStyle(fontFamily = fPoppins, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 24.sp),
-    bodyLarge = TextStyle(fontFamily = fPoppins, fontWeight = FontWeight.Medium, fontSize = 16.sp, lineHeight = 26.sp),
-    bodyMedium = TextStyle(fontFamily = fPoppins, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 22.sp),
-    labelSmall = TextStyle(fontFamily = fPoppins, fontWeight = FontWeight.Medium, fontSize = 10.sp),
+@Composable
+private fun WiiTypography() = Typography(
+    headlineLarge = TextStyle(fontFamily = dPoppins, fontWeight = FontWeight.SemiBold, fontSize = fzSmart(25f, 2.30f, 30f), lineHeight = fzSmart(32f, 2.90f, 38f)),
+    titleLarge = TextStyle(fontFamily = fPoppins, fontWeight = FontWeight.SemiBold, fontSize = fzSmart(17f, 1.45f, 20f), lineHeight = fzSmart(23f, 2.00f, 26f)),
+    bodyLarge = TextStyle(fontFamily = fPoppins, fontWeight = FontWeight.Medium, fontSize = fzSmart(15f, 1.25f, 17f), lineHeight = fzSmart(23f, 2.10f, 27f)),
+    bodyMedium = TextStyle(fontFamily = fPoppins, fontWeight = FontWeight.Medium, fontSize = fzSmart(13f, 1.08f, 15f), lineHeight = fzSmart(20f, 1.80f, 23f)),
+    labelSmall = TextStyle(fontFamily = fPoppins, fontWeight = FontWeight.Medium, fontSize = fzSmart(9f, 0.75f, 11f)),
 )
 
 object WiText {
@@ -180,7 +162,7 @@ fun Estilos(themeColors: WiTemaColors = OroTemaColors, content: @Composable () -
             lightColorScheme(primary = WiCss.mco, secondary = WiCss.mco, background = WiCss.bg, surface = WiCss.wb, onSurface = WiCss.tx1)
         }
         CompositionLocalProvider(LocalDensity provides cappedDensity) {
-            MaterialTheme(colorScheme = scheme, typography = WiiTypography, content = content)
+            MaterialTheme(colorScheme = scheme, typography = WiiTypography(), content = content)
         }
     }
 }

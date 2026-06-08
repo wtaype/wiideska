@@ -56,8 +56,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.wiidesk.app.backend.perfil.Smile
 import java.text.Normalizer
 import java.time.Duration
 import java.time.LocalDate
@@ -116,7 +116,7 @@ fun WiMessengerHost(messenger: WiMessenger, modifier: Modifier = Modifier) {
         WiMensajeView(
             msg = messenger.mensaje,
             onDone = messenger::clearMensaje,
-            modifier = Modifier.align(Alignment.TopCenter).padding(top = clampDp(10f, 1.4f, 18f), start = 18.dp, end = 18.dp),
+            modifier = Modifier.align(Alignment.TopCenter).padding(top = dpSmart(70f, 8.0f, 94f), start = dpSmart(14f, 1.6f, 20f), end = dpSmart(14f, 1.6f, 20f)),
         )
         WiTipView(
             msg = messenger.tip,
@@ -143,11 +143,11 @@ private fun WiTipView(msg: WiMsg?, onDone: (Long) -> Unit, modifier: Modifier = 
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(999.dp))
-                .background(active.type.wiColor().copy(alpha = 0.96f))
-                .padding(horizontal = 14.dp, vertical = 9.dp),
+                .background(WiCss.chromeSurface())
+                .padding(horizontal = dpSmart(12f, 1.4f, 16f), vertical = dpSmart(8f, 0.9f, 11f)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(active.text, style = WiText.small.copy(color = WiCss.white, fontFamily = fPoppins, fontWeight = FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(active.text, style = WiText.small.copy(color = active.type.wiColor(), fontFamily = fPoppins, fontWeight = FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -168,16 +168,16 @@ private fun WiMensajeView(msg: WiMsg?, onDone: (Long) -> Unit, modifier: Modifie
         val active = msg ?: return@AnimatedVisibility
         Card(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = WiCss.wb.copy(alpha = 0.98f)),
+            colors = CardDefaults.cardColors(containerColor = WiCss.chromeSurface()),
             border = WiCss.glassBorder(0.62f),
             modifier = Modifier.fillMaxWidth().softGlassShadow(),
         ) {
-            Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.padding(horizontal = dpSmart(12f, 1.5f, 16f), vertical = dpSmart(10f, 1.2f, 14f)), verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier.size(34.dp).clip(CircleShape).background(active.type.wiColor().copy(alpha = 0.14f)),
+                    modifier = Modifier.size(sizeSmart(30f, 3.2f, 36f)).clip(CircleShape).background(active.type.wiColor().copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(active.type.wiIcon(), null, tint = active.type.wiColor(), modifier = Modifier.size(19.dp))
+                    Icon(active.type.wiIcon(), null, tint = active.type.wiColor(), modifier = Modifier.size(FzSmart.iconS))
                 }
                 Text(
                     active.text,
@@ -228,7 +228,7 @@ fun GlassCard(
 ) {
     val shape = WiCss.glassShape(intensity)
     val cardContent: @Composable () -> Unit = {
-        Column(Modifier.padding(18.dp)) {
+        Column(Modifier.padding(FzSmart.cardPad)) {
             content()
         }
     }
@@ -287,16 +287,16 @@ fun WiButton(
             .clip(RoundedCornerShape(18.dp))
             .background(gradButton),
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = WiCss.white),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
+        contentPadding = PaddingValues(horizontal = dpSmart(16f, 1.8f, 22f), vertical = dpSmart(12f, 1.35f, 16f)),
     ) {
         if (loading) {
             CircularProgressIndicator(color = WiCss.white, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
         } else {
             if (icon != null) {
-                Icon(icon, null, modifier = Modifier.size(20.dp))
+                Icon(icon, null, modifier = Modifier.size(FzSmart.buttonIcon))
                 Spacer(Modifier.width(8.dp))
             }
-            Text(text, fontFamily = fPoppins, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Text(text, fontFamily = fPoppins, fontWeight = FontWeight.SemiBold, fontSize = FzSmart.button)
         }
     }
 }
@@ -313,8 +313,8 @@ fun WiField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, fontFamily = fPoppins) },
-        leadingIcon = leadingIcon?.let { { Icon(it, null, tint = WiCss.mco, modifier = Modifier.size(20.dp)) } },
+        label = { Text(label, fontFamily = fPoppins, fontSize = FzSmart.field) },
+        leadingIcon = leadingIcon?.let { { Icon(it, null, tint = WiCss.mco, modifier = Modifier.size(FzSmart.fieldIcon)) } },
         visualTransformation = visualTransformation,
         singleLine = true,
         modifier = modifier,
@@ -433,6 +433,70 @@ class WiStore(private val prefs: SharedPreferences) {
             keys.forEach(::remove)
             apply()
         }
+    }
+
+    fun saveCachedProfile(profile: Smile) {
+        prefs.edit().apply {
+            putString("profile_uid", profile.uid)
+            putString("profile_usuario", profile.usuario)
+            putString("profile_nombre", profile.nombre)
+            putString("profile_apellidos", profile.apellidos)
+            putString("profile_email", profile.email)
+            putString("profile_avatar", profile.avatar)
+            putString("profile_plan", profile.plan)
+            putString("profile_rol", profile.rol)
+            putString("profile_estado", profile.estado)
+            putBoolean("profile_activo", profile.activo)
+            putString("profile_registradoCon", profile.registradoCon)
+            putBoolean("profile_terminos", profile.terminos)
+            putString("profile_tema", profile.tema)
+            putBoolean("profile_verificado", profile.verificado)
+            putString("profile_segmento", profile.segmento)
+            putBoolean("profile_has_cache", true)
+            apply()
+        }
+    }
+
+    fun loadCachedProfile(): Smile? {
+        if (!prefs.getBoolean("profile_has_cache", false)) return null
+        return Smile(
+            uid = prefs.getString("profile_uid", "").orEmpty(),
+            usuario = prefs.getString("profile_usuario", "").orEmpty(),
+            nombre = prefs.getString("profile_nombre", "").orEmpty(),
+            apellidos = prefs.getString("profile_apellidos", "").orEmpty(),
+            email = prefs.getString("profile_email", "").orEmpty(),
+            avatar = prefs.getString("profile_avatar", null),
+            plan = prefs.getString("profile_plan", "free").orEmpty(),
+            rol = prefs.getString("profile_rol", "usuario").orEmpty(),
+            estado = prefs.getString("profile_estado", "activo").orEmpty(),
+            activo = prefs.getBoolean("profile_activo", true),
+            registradoCon = prefs.getString("profile_registradoCon", "correo").orEmpty(),
+            terminos = prefs.getBoolean("profile_terminos", true),
+            tema = prefs.getString("profile_tema", "Futuro").orEmpty(),
+            verificado = prefs.getBoolean("profile_verificado", false),
+            segmento = prefs.getString("profile_segmento", "publico").orEmpty(),
+        )
+    }
+
+    fun clearCachedProfile() {
+        remove(
+            "profile_uid",
+            "profile_usuario",
+            "profile_nombre",
+            "profile_apellidos",
+            "profile_email",
+            "profile_avatar",
+            "profile_plan",
+            "profile_rol",
+            "profile_estado",
+            "profile_activo",
+            "profile_registradoCon",
+            "profile_terminos",
+            "profile_tema",
+            "profile_verificado",
+            "profile_segmento",
+            "profile_has_cache",
+        )
     }
 }
 
