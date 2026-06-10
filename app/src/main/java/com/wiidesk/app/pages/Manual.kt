@@ -104,7 +104,24 @@ fun Manual(navController: NavController) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "1. Para encender tu PC apagada, dirígete a la pestaña 'Encender'.\n2. Selecciona la PC configurada previamente y presiona el botón 'Wake-on-LAN'.\n3. Nota: Tu placa madre (BIOS) y tarjeta de red deben tener habilitado el soporte de WoL para recibir el Magic Packet.",
+                text = "Para encender tu computadora apagada desde el celular, sigue estos pasos de configuración obligatorios en tu PC:\n\n" +
+                        "1. Configuración de BIOS/UEFI:\n" +
+                        "   • Reinicia tu PC y presiona la tecla de acceso a la BIOS (Supr, F2, F10 o F12).\n" +
+                        "   • Busca las opciones de energía (Power Management, APM Configuration o ACPI).\n" +
+                        "   • Activa la opción 'Power On by PCI-E/PCI' o 'Wake on LAN'. Guarda y sal.\n\n" +
+                        "2. Configuración en Windows (Administrador de Dispositivos):\n" +
+                        "   • Haz clic derecho en el botón de Inicio y abre 'Administrador de Dispositivos'.\n" +
+                        "   • Despliega 'Adaptadores de red', haz clic derecho en tu tarjeta de red (ej. Realtek/Intel Ethernet) y selecciona 'Propiedades'.\n" +
+                        "   • En la pestaña 'Opciones avanzadas', activa 'Wake on Magic Packet' o 'Reactivar en Magic Packet'.\n" +
+                        "   • En la pestaña 'Administración de energía', marca las casillas:\n" +
+                        "     - 'Permitir que este dispositivo reactive el equipo'\n" +
+                        "     - 'Permitir solo un Magic Packet para reactivar el equipo'.\n\n" +
+                        "3. Desactivar Inicio Rápido de Windows:\n" +
+                        "   • Ve a Panel de Control > Opciones de energía > Elegir el comportamiento de los botones de inicio/apagado.\n" +
+                        "   • Haz clic en 'Cambiar la configuración actualmente no disponible' y desmarca 'Activar inicio rápido'. Guarda los cambios.\n\n" +
+                        "4. Uso desde la App:\n" +
+                        "   • Asegúrate de estar conectado al mismo Wi-Fi local que la PC.\n" +
+                        "   • En la pestaña 'Encender', verás tu equipo registrado. Presiona 'Encender (WoL)' para enviar el paquete mágico UDP.",
                 style = WiText.body
             )
         }

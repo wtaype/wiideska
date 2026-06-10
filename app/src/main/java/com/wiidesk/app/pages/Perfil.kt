@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -77,7 +78,7 @@ fun Perfil(
     val scope = rememberCoroutineScope()
     var aliasValue by remember { mutableStateOf(store.get("celular_alias", "Mi Celular Android")) }
     var pinSeguridad by remember { mutableStateOf(store.get("celular_pin", "123456")) }
-    var selectedTheme by remember(profile?.tema) { mutableStateOf(profile?.tema?.ifBlank { null } ?: store.get("selected_theme", "Futuro")) }
+    var selectedTheme by remember(profile?.tema) { mutableStateOf(profile?.tema?.split("|")?.first()?.trim()?.ifBlank { null } ?: store.get("selected_theme", "Futuro")) }
     var fontScale by remember { mutableFloatStateOf(store.get("user_font_scale", "1.0").toFloatOrNull() ?: 1.0f) }
     val displayName = profile?.nombreCompleto?.ifBlank { profile.usuario } ?: aliasValue
     val scaleOptions = listOf(0.85f, 1.0f, 1.15f, 1.25f)
@@ -205,12 +206,13 @@ fun Perfil(
                                     .height(50.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable {
+                                        val hexTema = "${tema.name}|#%06X".format(tema.mco.toArgb() and 0x00FFFFFF)
                                         selectedTheme = tema.name
                                         store.save("selected_theme", tema.name)
                                         onThemeChange(tema)
                                         scope.launch {
                                             profile?.usuario?.takeIf { it.isNotBlank() }?.let {
-                                                runCatching { auth.updateProfileTheme(it, tema.name) }
+                                                runCatching { auth.updateProfileTheme(it, hexTema) }
                                                 val fresh = runCatching { auth.getSessionProfile() }.getOrNull()
                                                 if (fresh != null) onProfileChange(fresh)
                                             }
@@ -243,7 +245,7 @@ fun Perfil(
         Spacer(Modifier.height(22.dp))
 
         WiButton(
-            text = "Actualizar sesion",
+            text = "Guardar cambios",
             onClick = {
                 scope.launch {
                     val fresh = runCatching { auth.getSessionProfile() }.getOrNull()

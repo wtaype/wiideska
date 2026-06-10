@@ -30,7 +30,7 @@ fun Rutas(
         composable("inicio")     { Inicio(navController) }
         composable("manual")     { Manual(navController) }
         composable("pantalla")   { Pantalla(navController) }
-        composable("encender")   { Encender(navController) }
+        composable("encender")   { Encender(navController, activeProfile) }
         composable("ajustes")    { Ajustes(navController) }
         composable("perfil")     { Perfil(navController, onThemeChange, activeProfile, auth, onProfileChange, onFontScaleChange) }
         composable("login")      { Login(navController = navController, auth = auth, onAuthenticated = onProfileChange) }
@@ -42,5 +42,7 @@ fun Rutas(
         composable("miplan")     { MiPlan(navController) }
         composable("beneficios") { Beneficios(navController) }
         composable("motivacion") { Motivacion(navController) }
+        composable("guiabios")   { GuiaBios(navController) }
+        composable("lab")        { Lab(navController) }
     }
 }

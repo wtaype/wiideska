@@ -30,9 +30,9 @@ fun Inicio(navController: NavController) {
     val store = remember { wiStore(context) }
     
     // Obtener última conexión mockeada
-    val ultimoHostNombre = store.get("ultimo_host_nombre", "PC-Principal")
-    val ultimoHostMac = store.get("ultimo_host_mac", "00-E0-4C-36-4B-81")
-    val ultimoHostIp = store.get("ultimo_host_ip", "192.168.18.234")
+    val ultimoHostNombre = store.get("ultimo_host_nombre", "Mi-PC")
+    val ultimoHostMac = store.get("ultimo_host_mac", "00-00-00-00-00-00")
+    val ultimoHostIp = store.get("ultimo_host_ip", "127.0.0.1")
 
     Column(
         modifier = Modifier

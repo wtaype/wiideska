@@ -151,6 +151,16 @@ fun MenuRight(
                     )
                 }
 
+                item {
+                    MenuRouteItem(
+                        title = "Lab",
+                        subtitle = "Experimentos y pruebas",
+                        icon = Icons.Rounded.Science,
+                        isSelected = currentRoute == "lab",
+                        onClick = { onNavigate("lab"); onClose() }
+                    )
+                }
+
                 // Footer de Cierre de Sesión
                 item {
                     Spacer(Modifier.height(14.dp))
