@@ -10,8 +10,9 @@ data class DispositivoControl(
     val ipLocal: String = "",
     val ipBroadcast: String = "",
     val macAddress: String = "",
-    val comando: String = "ninguno",
-    val pin: Boolean = false,
+    val comando:     String     = "ninguno",
+    val estado:      String     = "ninguno", // encendido | suspendido | apagado | ninguno
+    val pin:         Boolean    = false,
     val creado: Timestamp? = null,
     val actualizado: Timestamp? = null
 ) {

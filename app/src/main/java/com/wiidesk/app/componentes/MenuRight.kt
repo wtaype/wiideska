@@ -161,6 +161,16 @@ fun MenuRight(
                     )
                 }
 
+                item {
+                    MenuRouteItem(
+                        title = "Lab 1 (RTDB)",
+                        subtitle = "Prueba Realtime DB",
+                        icon = Icons.Rounded.Science,
+                        isSelected = currentRoute == "lab1",
+                        onClick = { onNavigate("lab1"); onClose() }
+                    )
+                }
+
                 // Footer de Cierre de Sesión
                 item {
                     Spacer(Modifier.height(14.dp))

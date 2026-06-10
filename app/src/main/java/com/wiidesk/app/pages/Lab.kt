@@ -11,13 +11,24 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.wiidesk.app.*
 
+import com.wiidesk.app.backend.perfil.Smile
+import androidx.compose.ui.Alignment
+
 @Composable
-fun Lab(navController: NavController) {
-    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+fun Lab(navController: NavController, activeProfile: Smile?) {
+    val uid = activeProfile?.uid ?: FirebaseAuth.getInstance().currentUser?.uid
     val db  = FirebaseFirestore.getInstance()
 
     // ── Colección "lab" → tiempo REAL (addSnapshotListener) ───
     var cmdLab by remember { mutableStateOf("—") }
+
+    if (uid == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Inicia sesión para usar esta sección", style = WiText.body)
+        }
+        return
+    }
+
     DisposableEffect(uid) {
         val unsub = db.collection("lab").document(uid)
             .addSnapshotListener { snap, _ ->
@@ -29,6 +40,7 @@ fun Lab(navController: NavController) {
     fun enviarLab(cmd: String) {
         db.collection("lab").document(uid).set(mapOf("comando" to cmd))
     }
+
 
     // ── UI ─────────────────────────────────────────────────────
     Column(

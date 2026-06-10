@@ -43,6 +43,9 @@ fun Rutas(
         composable("beneficios") { Beneficios(navController) }
         composable("motivacion") { Motivacion(navController) }
         composable("guiabios")   { GuiaBios(navController) }
-        composable("lab")        { Lab(navController) }
+        composable("lab")        { Lab(navController, activeProfile) }
+        composable("lab1")       { Lab1(navController, activeProfile) }
     }
+
 }
+
