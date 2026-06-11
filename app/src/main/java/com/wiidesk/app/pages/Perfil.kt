@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material.icons.rounded.Verified
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -94,16 +95,27 @@ fun Perfil(
         Spacer(Modifier.height(10.dp))
 
         GlassCard(modifier = Modifier.fillMaxWidth(), intensity = 0.78f) {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                AvatarImage(profile = profile, size = sizeSmart(58f, 6.2f, 68f), fallbackName = displayName)
-                Spacer(Modifier.width(16.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(displayName, style = WiText.h3.copy(fontWeight = FontWeight.Bold, color = WiCss.tx1), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(profile?.email.orEmpty().ifBlank { "Sesion local del dispositivo" }, style = WiText.small, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ProfileChip(profile?.plan?.uppercase().orEmpty().ifBlank { "FREE" }, Icons.Rounded.Verified)
-                        ProfileChip(profile?.rol?.lowercase().orEmpty().ifBlank { "usuario" }, Icons.Rounded.Person)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    AvatarImage(profile = profile, size = sizeSmart(58f, 6.2f, 68f), fallbackName = displayName)
+                    Spacer(Modifier.width(16.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(displayName, style = WiText.h3.copy(fontWeight = FontWeight.Bold, color = WiCss.tx1), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(profile?.email.orEmpty().ifBlank { "Sesion local del dispositivo" }, style = WiText.small, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ProfileChip(profile?.plan?.uppercase().orEmpty().ifBlank { "FREE" }, Icons.Rounded.Verified)
+                            ProfileChip(profile?.rol?.lowercase().orEmpty().ifBlank { "usuario" }, Icons.Rounded.Person)
+                        }
                     }
+                }
+                if (profile != null) {
+                    Spacer(Modifier.height(12.dp))
+                    WiButton(
+                        text = "Editar datos",
+                        onClick = { navController.navigate("perfil_editar") },
+                        icon = Icons.Rounded.Edit,
+                        modifier = Modifier.fillMaxWidth().height(40.dp)
+                    )
                 }
             }
         }

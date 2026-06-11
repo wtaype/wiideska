@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     val auth = AuthRepo()
@@ -50,7 +51,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val initialTheme = WiTemas.find { it.name == savedThemeName } ?: CieloTemaColors
         _currentTheme.value = initialTheme
 
-        val cachedProfile = store.loadCachedProfile()
+        val cachedProfile = store.getls("wiSmile")?.toSmile()
         if (cachedProfile != null) {
             _activeProfile.value = cachedProfile
         }
@@ -81,7 +82,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val store = wiStore(context)
                 if (freshProfile != null) {
                     _activeProfile.value = freshProfile
-                    store.saveCachedProfile(freshProfile)
+                    store.savels("wiSmile", freshProfile.toJSONObject(), horas = 168)
                     val themeName = freshProfile.tema
                     WiTemas.find { it.name == themeName }?.let { theme ->
                         _currentTheme.value = theme
@@ -92,7 +93,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     if (loggedIn) {
                         withContext(Dispatchers.IO) { auth.logout(context) }
                         _activeProfile.value = null
-                        store.clearCachedProfile()
+                        store.remove("wiSmile")
                     }
                 }
             } else {
@@ -104,7 +105,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val store = wiStore(context)
                     withContext(Dispatchers.IO) { auth.logout(context) }
                     _activeProfile.value = null
-                    store.clearCachedProfile()
+                    store.remove("wiSmile")
                 }
             }
             _checkingSession.value = false
@@ -123,7 +124,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 auth.logout(context)
             }
             _activeProfile.value = null
-            wiStore(context).clearCachedProfile()
+            wiStore(context).remove("wiSmile")
             _loading.value = false
             onDone()
         }
@@ -133,13 +134,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _activeProfile.value = profile
         val store = wiStore(context)
         if (profile != null) {
-            store.saveCachedProfile(profile)
+            store.savels("wiSmile", profile.toJSONObject(), horas = 168)
             WiTemas.find { it.name == profile.tema }?.let { theme ->
                 _currentTheme.value = theme
                 store.save("selected_theme", theme.name)
             }
         } else {
-            store.clearCachedProfile()
+            store.remove("wiSmile")
         }
     }
 
@@ -159,7 +160,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             if (fresh != null) {
                 _activeProfile.value = fresh
-                wiStore(context).saveCachedProfile(fresh)
+                wiStore(context).savels("wiSmile", fresh.toJSONObject(), horas = 168)
             }
         }
     }
@@ -175,4 +176,56 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             wiStore(context).save("celular_pin", pin)
         }
     }
+}
+
+private fun Smile.toJSONObject(): JSONObject {
+    val json = JSONObject()
+    json.put("uid", uid)
+    json.put("userId", userId)
+    json.put("usuario", usuario)
+    json.put("nombre", nombre)
+    json.put("apellidos", apellidos)
+    json.put("email", email)
+    json.put("avatar", avatar ?: "")
+    json.put("plan", plan)
+    json.put("rol", rol)
+    json.put("estado", estado)
+    json.put("activo", activo)
+    json.put("registradoCon", registradoCon)
+    json.put("terminos", terminos)
+    json.put("tema", tema)
+    json.put("verificado", verificado)
+    json.put("segmento", segmento)
+    json.put("fechaNacimiento", fechaNacimiento)
+    json.put("pais", pais)
+    json.put("genero", genero)
+    json.put("gustos", gustos)
+    json.put("bio", bio)
+    return json
+}
+
+private fun JSONObject.toSmile(): Smile {
+    return Smile(
+        uid = optString("uid", ""),
+        userId = optString("userId", ""),
+        usuario = optString("usuario", ""),
+        nombre = optString("nombre", ""),
+        apellidos = optString("apellidos", ""),
+        email = optString("email", ""),
+        avatar = optString("avatar", "").takeIf { it.isNotBlank() },
+        plan = optString("plan", "free"),
+        rol = optString("rol", "usuario"),
+        estado = optString("estado", "activo"),
+        activo = optBoolean("activo", true),
+        registradoCon = optString("registradoCon", "correo"),
+        terminos = optBoolean("terminos", true),
+        tema = optString("tema", "Futuro"),
+        verificado = optBoolean("verificado", false),
+        segmento = optString("segmento", "publico"),
+        fechaNacimiento = optString("fechaNacimiento", ""),
+        pais = optString("pais", ""),
+        genero = optString("genero", ""),
+        gustos = optString("gustos", ""),
+        bio = optString("bio", "")
+    )
 }

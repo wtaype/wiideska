@@ -1,4 +1,4 @@
-package com.wiidesk.app.backend.core.wol
+package com.wiidesk.app.backend.smile
 
 import java.net.DatagramPacket
 import java.net.DatagramSocket

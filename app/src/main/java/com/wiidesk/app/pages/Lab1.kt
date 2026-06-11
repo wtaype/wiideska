@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 
 @Composable
 fun Lab1(navController: NavController, activeProfile: Smile?) {
-    val uid = activeProfile?.uid ?: FirebaseAuth.getInstance().currentUser?.uid
+    val uid = activeProfile?.uid?.takeIf { it.isNotBlank() } ?: FirebaseAuth.getInstance().currentUser?.uid
     val rtdbRef = remember { FirebaseDatabase.getInstance().getReference("lab1/$uid") }
 
     // ── Colección "lab1" en Realtime Database → tiempo REAL (ValueEventListener) ───

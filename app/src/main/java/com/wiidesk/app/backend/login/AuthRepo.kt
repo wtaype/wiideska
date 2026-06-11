@@ -230,9 +230,22 @@ class AuthRepo {
     }
 }
 
-private fun com.google.firebase.firestore.DocumentSnapshot.toSmile(): Smile =
-    Smile(
+private fun com.google.firebase.firestore.DocumentSnapshot.toSmile(): Smile {
+    val rawFecha = get("fechaNacimiento")
+    val fechaNacimientoStr = when (rawFecha) {
+        is com.google.firebase.Timestamp -> {
+            try {
+                java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(rawFecha.toDate())
+            } catch (e: Exception) {
+                ""
+            }
+        }
+        is String -> rawFecha
+        else -> ""
+    }
+    return Smile(
         uid = getString("uid").orEmpty(),
+        userId = getString("userId").orEmpty(),
         usuario = getString("usuario").orEmpty(),
         nombre = getString("nombre").orEmpty(),
         apellidos = getString("apellidos").orEmpty(),
@@ -247,7 +260,13 @@ private fun com.google.firebase.firestore.DocumentSnapshot.toSmile(): Smile =
         tema = getString("tema") ?: "Futuro",
         verificado = getBoolean("verificado") ?: false,
         segmento = getString("segmento") ?: "publico",
+        fechaNacimiento = fechaNacimientoStr,
+        pais = getString("pais").orEmpty(),
+        genero = getString("genero").orEmpty(),
+        gustos = getString("gustos").orEmpty(),
+        bio = getString("bio").orEmpty(),
     )
+}
 
 private fun Context.webClientId(): String =
     runCatching { getString(R.string.default_web_client_id) }.getOrDefault("")
@@ -262,5 +281,6 @@ private fun registroMap(usuario: String, email: String, uid: String): Map<String
     "usuario" to usuario,
     "email" to email.trim().lowercase(),
     "uid" to uid,
+    "userId" to uid,
     "creado" to FieldValue.serverTimestamp(),
 )

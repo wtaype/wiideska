@@ -57,7 +57,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.wiidesk.app.backend.perfil.Smile
 import java.text.Normalizer
 import java.time.Duration
 import java.time.LocalDate
@@ -435,69 +434,40 @@ class WiStore(private val prefs: SharedPreferences) {
         }
     }
 
-    fun saveCachedProfile(profile: Smile) {
-        prefs.edit().apply {
-            putString("profile_uid", profile.uid)
-            putString("profile_usuario", profile.usuario)
-            putString("profile_nombre", profile.nombre)
-            putString("profile_apellidos", profile.apellidos)
-            putString("profile_email", profile.email)
-            putString("profile_avatar", profile.avatar)
-            putString("profile_plan", profile.plan)
-            putString("profile_rol", profile.rol)
-            putString("profile_estado", profile.estado)
-            putBoolean("profile_activo", profile.activo)
-            putString("profile_registradoCon", profile.registradoCon)
-            putBoolean("profile_terminos", profile.terminos)
-            putString("profile_tema", profile.tema)
-            putBoolean("profile_verificado", profile.verificado)
-            putString("profile_segmento", profile.segmento)
-            putBoolean("profile_has_cache", true)
-            apply()
+    fun savels(clave: String, valor: org.json.JSONObject, horas: Int = 24): Boolean {
+        return try {
+            val wrapper = org.json.JSONObject().apply {
+                put("value", valor)
+                put("expiry", System.currentTimeMillis() + (horas.toLong() * 3600000L))
+            }
+            save(clave, wrapper.toString())
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 
-    fun loadCachedProfile(): Smile? {
-        if (!prefs.getBoolean("profile_has_cache", false)) return null
-        return Smile(
-            uid = prefs.getString("profile_uid", "").orEmpty(),
-            usuario = prefs.getString("profile_usuario", "").orEmpty(),
-            nombre = prefs.getString("profile_nombre", "").orEmpty(),
-            apellidos = prefs.getString("profile_apellidos", "").orEmpty(),
-            email = prefs.getString("profile_email", "").orEmpty(),
-            avatar = prefs.getString("profile_avatar", null),
-            plan = prefs.getString("profile_plan", "free").orEmpty(),
-            rol = prefs.getString("profile_rol", "usuario").orEmpty(),
-            estado = prefs.getString("profile_estado", "activo").orEmpty(),
-            activo = prefs.getBoolean("profile_activo", true),
-            registradoCon = prefs.getString("profile_registradoCon", "correo").orEmpty(),
-            terminos = prefs.getBoolean("profile_terminos", true),
-            tema = prefs.getString("profile_tema", "Futuro").orEmpty(),
-            verificado = prefs.getBoolean("profile_verificado", false),
-            segmento = prefs.getString("profile_segmento", "publico").orEmpty(),
-        )
+    fun getls(clave: String): org.json.JSONObject? {
+        val str = get(clave, "")
+        if (str.isBlank()) return null
+        return try {
+            val wrapper = org.json.JSONObject(str)
+            val expiry = wrapper.optLong("expiry", 0L)
+            if (expiry > 0L && System.currentTimeMillis() > expiry) {
+                remove(clave)
+                return null
+            }
+            wrapper.optJSONObject("value")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
-    fun clearCachedProfile() {
-        remove(
-            "profile_uid",
-            "profile_usuario",
-            "profile_nombre",
-            "profile_apellidos",
-            "profile_email",
-            "profile_avatar",
-            "profile_plan",
-            "profile_rol",
-            "profile_estado",
-            "profile_activo",
-            "profile_registradoCon",
-            "profile_terminos",
-            "profile_tema",
-            "profile_verificado",
-            "profile_segmento",
-            "profile_has_cache",
-        )
-    }
+
+
+
 }
 
 fun wiStore(context: Context, name: String = "wiidesk_store"): WiStore =

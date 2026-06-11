@@ -4,74 +4,37 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.wiidesk.app.*
-
 import com.wiidesk.app.backend.perfil.Smile
-import androidx.compose.ui.Alignment
+import com.wiidesk.app.*
 
 @Composable
 fun Lab(navController: NavController, activeProfile: Smile?) {
-    val uid = activeProfile?.uid ?: FirebaseAuth.getInstance().currentUser?.uid
-    val db  = FirebaseFirestore.getInstance()
+    val uid = activeProfile?.uid ?: return
+    val username = activeProfile.usuario
+    val db = FirebaseFirestore.getInstance()
+    var cmd by remember { mutableStateOf("—") }
 
-    // ── Colección "lab" → tiempo REAL (addSnapshotListener) ───
-    var cmdLab by remember { mutableStateOf("—") }
-
-    if (uid == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Inicia sesión para usar esta sección", style = WiText.body)
-        }
-        return
-    }
-
-    DisposableEffect(uid) {
-        val unsub = db.collection("lab").document(uid)
-            .addSnapshotListener { snap, _ ->
-                cmdLab = snap?.getString("comando") ?: "—"
-            }
+    DisposableEffect(username) {
+        val unsub = db.collection("lab").document(username).addSnapshotListener { s, _ -> cmd = s?.getString("texto") ?: "—" }
         onDispose { unsub.remove() }
     }
 
-    fun enviarLab(cmd: String) {
-        db.collection("lab").document(uid).set(mapOf("comando" to cmd))
-    }
-
-
-    // ── UI ─────────────────────────────────────────────────────
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        Text("Lab", style = WiText.h2.copy(fontWeight = FontWeight.Bold, color = WiCss.tx1))
-
-        // ── Sección 1: "lab" — TIEMPO REAL ────────────────────
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    "⚡ Colección: lab  (Tiempo real)",
-                    style = WiText.body.copy(fontWeight = FontWeight.Bold, color = WiCss.tx1)
-                )
-                Text(
-                    "addSnapshotListener → llega al instante sin hacer get.",
-                    style = WiText.small.copy(color = WiCss.tx3)
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("ninguno", "hello").forEach { cmd ->
-                        FilledTonalButton(onClick = { enviarLab(cmd) }) {
-                            Text(cmd, fontFamily = fPoppins)
-                        }
-                    }
+    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("Lab Firestore", style = WiText.h2)
+        GlassCard(Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Hola", "Hello").forEach { c ->
+                    WiButton(
+                        text = c,
+                        onClick = { db.collection("lab").document(username).set(mapOf("texto" to c, "userId" to uid), com.google.firebase.firestore.SetOptions.merge()) },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
-                Text(
-                    "Activo ahora: $cmdLab",
-                    style = WiText.body.copy(color = WiCss.success, fontWeight = FontWeight.SemiBold)
-                )
             }
+            Text("Comando: $cmd", style = WiText.body.copy(color = WiCss.success), modifier = Modifier.padding(top = 12.dp))
         }
     }
 }

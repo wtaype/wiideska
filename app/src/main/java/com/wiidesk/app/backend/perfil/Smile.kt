@@ -4,6 +4,7 @@ import com.google.firebase.firestore.FieldValue
 
 data class Smile(
     val uid: String = "",
+    val userId: String = "",
     val usuario: String = "",
     val nombre: String = "",
     val apellidos: String = "",
@@ -18,12 +19,18 @@ data class Smile(
     val tema: String = "Futuro",
     val verificado: Boolean = false,
     val segmento: String = "publico",
+    val fechaNacimiento: String = "",
+    val pais: String = "",
+    val genero: String = "",
+    val gustos: String = "",
+    val bio: String = "",
 ) {
     val nombreCompleto: String
         get() = listOf(nombre, apellidos).filter { it.isNotBlank() }.joinToString(" ")
 
     fun toFirestore(newDocument: Boolean = false): Map<String, Any?> = buildMap {
         put("uid", uid)
+        put("userId", uid)
         put("usuario", usuario)
         put("email", email.trim().lowercase())
         put("nombre", nombre.trim())
@@ -38,6 +45,11 @@ data class Smile(
         put("tema", tema)
         put("verificado", verificado)
         put("segmento", segmento)
+        put("fechaNacimiento", fechaNacimiento)
+        put("pais", pais)
+        put("genero", genero)
+        put("gustos", gustos)
+        put("bio", bio)
         if (newDocument) {
             put("creado", FieldValue.serverTimestamp())
             put("terminosFecha", FieldValue.serverTimestamp())

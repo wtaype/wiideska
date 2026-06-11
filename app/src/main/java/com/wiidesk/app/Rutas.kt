@@ -33,6 +33,7 @@ fun Rutas(
         composable("encender")   { Encender(navController, activeProfile) }
         composable("ajustes")    { Ajustes(navController) }
         composable("perfil")     { Perfil(navController, onThemeChange, activeProfile, auth, onProfileChange, onFontScaleChange) }
+        composable("perfil_editar") { PerfilEditar(navController, activeProfile, auth, onProfileChange) }
         composable("login")      { Login(navController = navController, auth = auth, onAuthenticated = onProfileChange) }
         composable("acerca")     { Acerca(navController) }
         composable("terminos")   { Terminos(navController) }
