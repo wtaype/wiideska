@@ -35,6 +35,7 @@ fun Ajustes(navController: NavController) {
 
     // Config de Video
     var preferredCodec by remember { mutableStateOf(store.get("preferred_codec", "H.264")) }
+    var preferredResolution by remember { mutableStateOf(store.get("preferred_resolution", "720p")) }
     var hardwareAcc by remember { mutableStateOf(store.getBool("hardware_acceleration", true)) }
     var maxBitrate by remember { mutableFloatStateOf(store.get("max_bitrate", "4.0").toFloatOrNull() ?: 4f) }
 
@@ -154,6 +155,41 @@ fun Ajustes(navController: NavController) {
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(preferredCodec, style = WiText.small.copy(fontWeight = FontWeight.Bold, color = WiCss.mco))
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            // Resolución selector
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.Settings, null, tint = WiCss.mco, modifier = Modifier.size(22.dp))
+                    Spacer(Modifier.width(10.dp))
+                    Column {
+                        Text("Resolución de Video", style = WiText.body.copy(fontWeight = FontWeight.Bold, color = WiCss.tx1))
+                        Text("Resolución preferida para el stream", style = WiText.tiny)
+                    }
+                }
+                
+                // Toggle simple entre 720p y 1080p
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(WiCss.bg1)
+                        .clickable {
+                            preferredResolution = if (preferredResolution == "720p") "1080p" else "720p"
+                            store.save("preferred_resolution", preferredResolution)
+                        }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(preferredResolution, style = WiText.small.copy(fontWeight = FontWeight.Bold, color = WiCss.mco))
                 }
             }
 

@@ -4,6 +4,8 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,21 +17,53 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import com.wiidesk.app.*
+import com.wiidesk.app.backend.movil2pc.Movil2PcClient
 import kotlinx.coroutines.delay
+import org.webrtc.SurfaceViewRenderer
+import org.webrtc.VideoTrack
 
 @Composable
 fun Pantalla(navController: NavController) {
+    val context = LocalContext.current
     val messenger = LocalWiMessenger.current
-    var isStreaming by remember { mutableStateOf(false) }
+    val store = remember { wiStore(context) }
+
+    val idPc = remember { store.get("active_id_pc", "") }
+    var videoTrack by remember { mutableStateOf<VideoTrack?>(null) }
+
+    // Inicializar cliente WebRTC
+    val client = remember(idPc) {
+        if (idPc.isNotEmpty()) {
+            Movil2PcClient(context, idPc) { track ->
+                videoTrack = track
+            }
+        } else null
+    }
+
+    val clientState = client?.connectionState?.collectAsState()?.value ?: Movil2PcClient.State.IDLE
+    val isStreaming = clientState == Movil2PcClient.State.CONNECTED
+
+    // Conexión automática al entrar a la pantalla
+    DisposableEffect(client) {
+        client?.connect()
+        onDispose {
+            client?.disconnect()
+        }
+    }
+
     var scaleMode by remember { mutableStateOf(true) } // true = Fit, false = Fill
     var micMuted by remember { mutableStateOf(true) }
     var soundEnabled by remember { mutableStateOf(true) }
-    
+
     // Stats dinámicas simuladas
     var fps by remember { mutableStateOf(60) }
     var ping by remember { mutableStateOf(12) }
@@ -81,15 +115,39 @@ fun Pantalla(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(if (isStreaming) WiCss.success.copy(alpha = 0.15f) else WiCss.offline.copy(alpha = 0.15f))
-                        .border(1.dp, if (isStreaming) WiCss.success.copy(alpha = 0.5f) else WiCss.offline.copy(alpha = 0.5f), RoundedCornerShape(99.dp))
+                        .background(
+                            when (clientState) {
+                                Movil2PcClient.State.CONNECTED -> WiCss.success.copy(alpha = 0.15f)
+                                Movil2PcClient.State.CONNECTING -> WiCss.warning.copy(alpha = 0.15f)
+                                else -> WiCss.offline.copy(alpha = 0.15f)
+                            }
+                        )
+                        .border(
+                            1.dp,
+                            when (clientState) {
+                                Movil2PcClient.State.CONNECTED -> WiCss.success.copy(alpha = 0.5f)
+                                Movil2PcClient.State.CONNECTING -> WiCss.warning.copy(alpha = 0.5f)
+                                else -> WiCss.offline.copy(alpha = 0.5f)
+                            },
+                            RoundedCornerShape(99.dp)
+                        )
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (isStreaming) "EN VIVO" else "SIN CONEXIÓN",
+                        text = when (clientState) {
+                            Movil2PcClient.State.CONNECTED -> "EN VIVO"
+                            Movil2PcClient.State.CONNECTING -> "CONECTANDO"
+                            Movil2PcClient.State.ERROR -> "ERROR"
+                            else -> "SIN CONEXIÓN"
+                        },
                         style = WiText.tiny.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (isStreaming) WiCss.success else WiCss.tx3
+                            color = when (clientState) {
+                                Movil2PcClient.State.CONNECTED -> WiCss.success
+                                Movil2PcClient.State.CONNECTING -> WiCss.warning
+                                Movil2PcClient.State.ERROR -> WiCss.error
+                                else -> WiCss.tx3
+                            }
                         )
                     )
                 }
@@ -107,7 +165,7 @@ fun Pantalla(navController: NavController) {
                     .softGlassShadow(),
                 contentAlignment = Alignment.Center
             ) {
-                if (isStreaming) {
+                if (clientState == Movil2PcClient.State.CONNECTED && videoTrack != null) {
                     // Contenedor del stream
                     Box(
                         modifier = Modifier
@@ -115,39 +173,43 @@ fun Pantalla(navController: NavController) {
                             .background(Color.Black),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Simulación de pantalla de Windows
                         Box(
                             modifier = if (scaleMode) Modifier.fillMaxWidth().aspectRatio(16f/9f) else Modifier.fillMaxSize()
                         ) {
-                            // Fondo con gradiente neón de la pc simulada
-                            Box(
+                            // SurfaceViewRenderer real de WebRTC
+                            AndroidView(
+                                factory = { ctx ->
+                                    SurfaceViewRenderer(ctx).apply {
+                                        client?.getEglContext()?.let { eglCtx ->
+                                            init(eglCtx, null)
+                                        }
+                                        setEnableHardwareScaler(true)
+                                    }
+                                },
+                                update = { view ->
+                                    videoTrack?.addSink(view)
+                                },
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(
-                                        androidx.compose.ui.graphics.Brush.radialGradient(
-                                            colors = listOf(WiCss.mco.copy(alpha = 0.35f), Color.Transparent),
+                                    .pointerInput(Unit) {
+                                        detectTapGestures(
+                                            onTap = { offset ->
+                                                val rx = offset.x / size.width
+                                                val ry = offset.y / size.height
+                                                client?.sendCommand("mouse_move", mapOf("x" to rx, "y" to ry))
+                                                client?.sendCommand("mouse_click", mapOf("boton" to "izquierdo", "presionado" to true))
+                                                client?.sendCommand("mouse_click", mapOf("boton" to "izquierdo", "presionado" to false))
+                                            }
                                         )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(
-                                        Icons.Rounded.Monitor,
-                                        contentDescription = null,
-                                        tint = WiCss.mco,
-                                        modifier = Modifier.size(64.dp)
-                                    )
-                                    Spacer(Modifier.height(12.dp))
-                                    Text(
-                                        text = "Conectado a PC-Principal",
-                                        style = WiText.body.copy(color = WiCss.white, fontWeight = FontWeight.Bold)
-                                    )
-                                    Text(
-                                        text = "192.168.1.100 - WebRTC P2P",
-                                        style = WiText.tiny.copy(color = WiCss.white.copy(alpha = 0.7f))
-                                    )
-                                }
-                            }
+                                    }
+                                    .pointerInput(Unit) {
+                                        detectDragGestures { change, _ ->
+                                            val rx = change.position.x / size.width
+                                            val ry = change.position.y / size.height
+                                            client?.sendCommand("mouse_move", mapOf("x" to rx, "y" to ry))
+                                        }
+                                    }
+                            )
 
                             // Panel de métricas en tiempo real flotando
                             Row(
@@ -166,7 +228,7 @@ fun Pantalla(navController: NavController) {
                         }
                     }
                 } else {
-                    // Estado inactivo
+                    // Estado inactivo / cargando
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(24.dp)
@@ -178,24 +240,36 @@ fun Pantalla(navController: NavController) {
                                 .background(WiCss.bg1),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                Icons.Rounded.TvOff,
-                                contentDescription = null,
-                                tint = WiCss.tx3,
-                                modifier = Modifier.size(36.dp)
-                            )
+                            if (clientState == Movil2PcClient.State.CONNECTING) {
+                                CircularProgressIndicator(color = WiCss.mco, modifier = Modifier.size(36.dp))
+                            } else {
+                                Icon(
+                                    Icons.Rounded.TvOff,
+                                    contentDescription = null,
+                                    tint = WiCss.tx3,
+                                    modifier = Modifier.size(36.dp)
+                                )
+                            }
                         }
                         Spacer(Modifier.height(16.dp))
                         Text(
-                            text = "Transmisión Detenida",
+                            text = when (clientState) {
+                                Movil2PcClient.State.CONNECTING -> "Estableciendo Conexión"
+                                Movil2PcClient.State.ERROR -> "Fallo en la Conexión"
+                                else -> "Transmisión Detenida"
+                            },
                             style = WiText.h3.copy(fontWeight = FontWeight.Bold, color = WiCss.tx1)
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = "Inicia el streaming para ver y controlar tu escritorio remoto a través de una red segura de baja latencia.",
+                            text = when (clientState) {
+                                Movil2PcClient.State.CONNECTING -> "Negociando SDP y candidatos de red mediante WebRTC..."
+                                Movil2PcClient.State.ERROR -> "Ocurrió un problema de red al intentar conectar con la PC."
+                                else -> "Inicia el streaming para ver y controlar tu escritorio remoto a través de una red segura de baja latencia."
+                            },
                             style = WiText.body.copy(color = WiCss.tx3),
                             modifier = Modifier.padding(horizontal = 16.dp),
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
@@ -262,16 +336,17 @@ fun Pantalla(navController: NavController) {
 
                     // Botón principal de Conectar / Desconectar
                     WiButton(
-                        text = if (isStreaming) "Desconectar" else "Conectar",
+                        text = if (isStreaming || clientState == Movil2PcClient.State.CONNECTING) "Desconectar" else "Conectar",
                         onClick = {
-                            isStreaming = !isStreaming
-                            if (isStreaming) {
-                                messenger.Mensaje("Conectado con éxito a la PC", WiMsgType.Success)
-                            } else {
+                            if (isStreaming || clientState == Movil2PcClient.State.CONNECTING) {
+                                client?.disconnect()
                                 messenger.Mensaje("Transmisión finalizada", WiMsgType.Info)
+                            } else {
+                                client?.connect()
+                                messenger.Mensaje("Conectando con la PC", WiMsgType.Info)
                             }
                         },
-                        icon = if (isStreaming) Icons.Rounded.TvOff else Icons.Rounded.Tv,
+                        icon = if (isStreaming || clientState == Movil2PcClient.State.CONNECTING) Icons.Rounded.TvOff else Icons.Rounded.Tv,
                         modifier = Modifier.width(150.dp)
                     )
 
@@ -301,3 +376,4 @@ fun Pantalla(navController: NavController) {
         }
     }
 }
+
